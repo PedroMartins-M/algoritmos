@@ -14,49 +14,64 @@ namespace _08_ValidaCPF
             Console.Write("Digite o CPF: ");
             string cpf = Console.ReadLine();
 
-            if (ValidarCPF(cpf))
-                Console.WriteLine("CPF válido!");
+            // 1 - Eliminar caractres não numéricos
+            //cpf.replace("'.", "");
+            //cpf.Replace("'-", "");
+            cpf = Regex.Replace(cpf, "[^0-9]", "");
+
+            // 2 - Validar se tem 11 digitos
+            if (cpf.Length != 11)
+            {
+                Console.WriteLine("CPF deve conter 11 digitos");
+                return;
+            }
+
+            // 3- Validas CPFs com todos os números iguais
+            /* if( cpf == "11111111111" || cpf == "22222222222" || cpf == "33333333333" ||
+                 cpf == "44444444444" || cpf == "55555555555" || cpf == "66666666666" ||
+                 cpf == "77777777777" || cpf == "88888888888" || cpf == "99999999999"                 
+             )*/
+            if (cpf.Distinct().Count() == 1)
+            {
+                Console.WriteLine("CPF inválido! Números repetidos não são permitidos");
+                return;
+            }
+
+            int digX = CalculaDV(cpf, 9, 10);
+
+            int digY = CalculaDV(cpf, 10, 11);
+
+            //6 - Comparar os dígitos
+            if (
+                int.Parse(cpf[9].ToString()) == digX &&
+                int.Parse(cpf[10].ToString()) == digY
+               )
+            {
+                Console.WriteLine("CPF VÁLIDO!");
+            }
             else
-                Console.WriteLine("CPF inválido!");
+            {
+                Console.WriteLine("CPF INVÁLIDO!");
+            }
         }
 
-        static bool ValidarCPF(string cpf)
+        public static int CalculaDV(string cpf, int qtdeNumeros, int peso)
         {
-            if (string.IsNullOrEmpty(cpf))
-                return false;
-
-            Regex regex = new Regex(@"^\d{3}\.?\d{3}\.?\d{3}-?\d{2}$");
-
-            if (!regex.IsMatch(cpf))
-                return false;
-
-            cpf = new string(cpf.Where(char.IsDigit).ToArray());
-
-            if (cpf.All(c => c == cpf[0])) 
-                return false;
-
-            int[] multiplicadores1 = { 10, 9, 8, 7, 6, 5, 4, 3, 2 };
-            int[] multiplicadores2 = { 11, 10, 9, 8, 7, 6, 5, 4, 3, 2 };
-
-            string tempCpf = cpf.Substring(0, 9);
             int soma = 0;
+            char[] cpfVetor = cpf.ToCharArray();
 
-            for (int i = 0; i < 9; i++)
-                soma += (tempCpf[i] - '0') * multiplicadores1[i];
-
+            for (int i = 0; i < qtdeNumeros; i++)
+            {
+                soma += int.Parse(cpfVetor[i].ToString()) * (peso - i);
+            }
             int resto = soma % 11;
-            int digito1 = resto < 2 ? 0 : 11 - resto;
 
-            tempCpf += digito1;
-            soma = 0;
-
-            for (int i = 0; i < 10; i++)
-                soma += (tempCpf[i] - '0') * multiplicadores2[i];
-
-            resto = soma % 11;
-            int digito2 = resto < 2 ? 0 : 11 - resto;
-
-            return cpf.EndsWith(digito1.ToString() + digito2.ToString());
+            int digito = 0;
+            if (resto >= 2)
+            {
+                digito = 11 - resto;
+            }
+            return digito;
         }
     }
 }
